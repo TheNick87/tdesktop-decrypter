@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import argparse
@@ -317,6 +318,10 @@ def main(argv: Optional[List[str]] = None):
 
     try:
         args.handler(args)
+    except BrokenPipeError:
+        # The reader went away (e.g. `| head`): stop quietly.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        sys.exit(1)
     except NoKeyFileException:
         eprint("No key file was found. Is the tdata path correct?")
         sys.exit(1)
