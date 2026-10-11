@@ -380,6 +380,20 @@ class AccountFiles:
         return files
 
 
+SORT_TIME = "time"
+SORT_ORDERS = (SORT_TIME,)
+
+
+def sort_stored_files(files: List[StoredFile], order: Optional[str]) -> List[StoredFile]:
+    """
+    Sorts by the given order; files without a time (account-folder files) go last.
+    """
+    if order == SORT_TIME:
+        return sorted(files, key=lambda stored: stored.time or 0, reverse=True)
+
+    return files
+
+
 class ExtractResult:
     def __init__(self, stored: StoredFile, path: str):
         self.stored = stored

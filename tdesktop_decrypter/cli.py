@@ -12,11 +12,13 @@ from .file_io import LegacyTdataException
 from .stored_files import (
     KIND_MEDIA,
     KINDS,
+    SORT_ORDERS,
     AccountFiles,
     StoredFile,
     StoredFileException,
     extract,
     parse_stored_file_id,
+    sort_stored_files,
 )
 from .decrypter import (
     ParsedTdata,
@@ -197,7 +199,10 @@ def command_list(args):
                     {
                         "index": account.index,
                         "user_id": account.user_id,
-                        "files": [stored_file_json(f) for f in account.list(kinds)],
+                        "files": [
+                            stored_file_json(f)
+                            for f in sort_stored_files(account.list(kinds), args.sort)
+                        ],
                     }
                     for account in accounts
                 ],
@@ -207,7 +212,7 @@ def command_list(args):
         return
 
     for account in accounts:
-        files = account.list(kinds)
+        files = sort_stored_files(account.list(kinds), args.sort)
         print(f"Account {account.index} (user {account.user_id}):")
         for stored in files:
             print(f"  {stored.id}  {stored_file_details(stored)}")
@@ -286,6 +291,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     list_.add_argument("--account", type=int, default=None, help="Only this account index")
     list_.add_argument("--kind", choices=KINDS, default=None, help="Only this kind")
+    list_.add_argument(
+        "--sort",
+        choices=SORT_ORDERS,
+        default=None,
+        help="Sort each account's files; time = most recently used first",
+    )
     list_.set_defaults(handler=command_list)
 
     extract_ = commands.add_parser(

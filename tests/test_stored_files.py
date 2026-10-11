@@ -10,6 +10,7 @@ from tdesktop_decrypter.stored_files import (
     StoredFileException,
     extract,
     parse_stored_file_id,
+    sort_stored_files,
 )
 from tdesktop_decrypter.streaming import PART_SIZE, document_base_key
 
@@ -121,6 +122,18 @@ class AccountFilesTest(unittest.TestCase):
         self.assertNotIn(f"1/media/{EMOJI_DOC}", files)
 
         self.assertEqual(len(files), 8)
+
+    def test_sort_by_time_puts_most_recent_first_and_untimed_last(self):
+        files = sort_stored_files(self.account.list(), "time")
+        times = [stored.time for stored in files]
+
+        # emoji frames, lottie entry, video (latest chunk), partial jpg, sticker, then account files.
+        self.assertEqual(times, [60, 50, 40, 20, 10, None, None, None])
+        self.assertEqual(files[2].id, f"1/media/{VIDEO_DOC}")
+
+    def test_no_sort_keeps_listing_order(self):
+        files = self.account.list()
+        self.assertEqual(sort_stored_files(files, None), files)
 
     def test_extract_partial_cache_entry_uses_original_name(self):
         result = extract(self.account, "cache", f"{0x102:016X}{NAMED_DOC:016X}", self.out_dir)

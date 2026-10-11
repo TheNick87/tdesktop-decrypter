@@ -38,6 +38,7 @@ python -m tdesktop_decrypter arguments
 - `--json`, `-j` - JSON output
 - `info --show_settings` - show decrypted settings
 - `list --account N` / `list --kind account|cache|media|media-entry` - filter the listing
+- `list --sort time` - most recently used files first, within each account
 - `extract <stored-file-id> <out_dir>` - the ID is printed by `list`, e.g. `1/cache/<32 hex>` or `1/media/<document id>`
 - `extract --force` - overwrite existing files
 - `extract --chunks` - for media documents, also dump each decrypted chunk
