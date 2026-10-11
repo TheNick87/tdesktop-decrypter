@@ -6,6 +6,6 @@ setup(
     packages=['tdesktop_decrypter'],
     install_requires=['tgcrypto'],
     entry_points={
-        'console_scripts': ['tdesktop-decrypter=tdesktop_decrypter:main']
+        'console_scripts': ['tdesktop-decrypter=tdesktop_decrypter.cli:main']
     }
 )

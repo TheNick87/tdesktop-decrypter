@@ -72,3 +72,40 @@ def prepare_aes_old_mtp(local_key, msg_key, send=False):
     iv = sha1A[8:20] + sha1B[:8] + sha1C[16:20] + sha1D[:8]
 
     return key, iv
+
+
+CACHE_FILE_MAGIC = b"TDEF"
+CACHE_SALT_SIZE = 64
+CACHE_HEADER_SIZE = 48
+CACHE_PAYLOAD_OFFSET = len(CACHE_FILE_MAGIC) + CACHE_SALT_SIZE + CACHE_HEADER_SIZE
+
+
+def prepare_aes_ctr_cache(local_key: bytes, salt: bytes):
+    key = hashlib.sha256(local_key[:128] + salt[:32]).digest()
+    iv = hashlib.sha256(local_key[128:] + salt[32:]).digest()[:16]
+    return key, iv
+
+
+def decrypt_cache_file(data: bytes, local_key: bytes) -> bytes:
+    """
+    Decrypts a cache database file (binlog or value): "TDEF" | salt(64) | AES-256-CTR(header(48) | payload).
+    Returns the payload, still including its random padding up to a 16-byte boundary.
+    """
+    if data[:4] != CACHE_FILE_MAGIC:
+        raise CryptoException("wrong magic. not a cache database file?")
+
+    salt = data[4 : 4 + CACHE_SALT_SIZE]
+    encrypted = data[4 + CACHE_SALT_SIZE :]
+    encrypted = encrypted[: len(encrypted) // 16 * 16]
+
+    if len(encrypted) < CACHE_HEADER_SIZE:
+        raise CryptoException("cache database file is too short")
+
+    key, iv = prepare_aes_ctr_cache(local_key, salt)
+    decrypted = tgcrypto.ctr256_decrypt(encrypted, key, iv, bytes(1))
+
+    checksum = hashlib.sha256(local_key + salt + decrypted[:16]).digest()
+    if checksum != decrypted[16:CACHE_HEADER_SIZE]:
+        raise CryptoException("bad cache file checksum - wrong key or corrupted file")
+
+    return decrypted[CACHE_HEADER_SIZE:]

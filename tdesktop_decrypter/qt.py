@@ -39,3 +39,10 @@ def read_qt_byte_array(data: BytesIO) -> bytes:
 
 def read_qt_utf8(data: BytesIO) -> str:
     return read_qt_byte_array(data).decode("utf16")
+
+
+def read_qt_string(data: BytesIO) -> str:
+    """
+    QString: u32 byte length (0xFFFFFFFF for null), then UTF-16BE.
+    """
+    return read_qt_byte_array(data).decode("utf-16-be")

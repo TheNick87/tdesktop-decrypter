@@ -100,6 +100,7 @@ class ParsedTdata:
     def __init__(self):
         self.settings: Optional[Dict[SettingsBlock, Any]] = None
         self.accounts: Dict[int, ParsedAccount] = None
+        self.local_key: bytes = None
 
 
 class TdataReaderException(Exception):
@@ -124,6 +125,14 @@ class TdataReader:
         self._io = io
         self._dataname = dataname or TdataReader.DEFAULT_DATANAME
 
+    @property
+    def io(self) -> TdataFileIo:
+        return self._io
+
+    @property
+    def dataname(self) -> str:
+        return self._dataname
+
     def read(self, passcode: str = None) -> ParsedTdata:
         parsed_tdata = ParsedTdata()
         parsed_tdata.settings = self.read_settings()
@@ -137,6 +146,7 @@ class TdataReader:
             accounts[account_index] = account_reader.read(local_key)
 
         parsed_tdata.accounts = accounts
+        parsed_tdata.local_key = local_key
         return parsed_tdata
 
     def read_key_data(self, passcode: str = None) -> Tuple[bytes, List[int]]:
