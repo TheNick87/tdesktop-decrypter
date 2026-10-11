@@ -329,6 +329,9 @@ def main(argv: Optional[List[str]] = None):
 
     try:
         args.handler(args)
+        # Flush here: when the output fits in the pipe buffer, the broken pipe
+        # only shows up on the final flush, after the handler has returned.
+        sys.stdout.flush()
     except BrokenPipeError:
         # The reader went away (e.g. `| head`): stop quietly.
         os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
